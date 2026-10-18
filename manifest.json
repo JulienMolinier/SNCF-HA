@@ -1,0 +1,12 @@
+{
+  "domain": "sncf_departures",
+  "name": "SNCF Departures",
+  "codeowners": ["@YOUR_GITHUB_USER"],
+  "config_flow": true,
+  "documentation": "https://github.com/YOUR_GITHUB_USER/sncf-departures",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/YOUR_GITHUB_USER/sncf-departures/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

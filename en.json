@@ -1,0 +1,62 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "SNCF route",
+        "description": "Get a free API key at https://www.digital.sncf.com/startup/api, then type part of each station name.",
+        "data": {
+          "api_key": "API key",
+          "origin_query": "Departure station",
+          "destination_query": "Arrival station"
+        }
+      },
+      "stations": {
+        "title": "Choose the stations",
+        "data": {
+          "origin_id": "Departure station",
+          "destination_id": "Arrival station"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Reauthenticate",
+        "description": "The SNCF API rejected your key. Enter a new one.",
+        "data": {"api_key": "API key"}
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid API key",
+      "cannot_connect": "Unable to reach the SNCF API",
+      "rate_limited": "API quota exceeded, try again later",
+      "no_station_found": "No station found",
+      "same_station": "Departure and arrival must be different"
+    },
+    "abort": {
+      "already_configured": "This route is already configured",
+      "reauth_successful": "API key updated"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options",
+        "data": {
+          "scan_interval": "Refresh interval (seconds)",
+          "train_count": "Number of trains"
+        },
+        "data_description": {
+          "scan_interval": "Each refresh uses 2 requests of your 5,000/day quota."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "next_departure": {"name": "Next departure"},
+      "next_delay": {"name": "Next train delay"},
+      "cancelled_trains": {"name": "Cancelled trains"}
+    },
+    "binary_sensor": {
+      "cancellation": {"name": "Cancellation"}
+    }
+  }
+}
