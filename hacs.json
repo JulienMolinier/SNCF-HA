@@ -1,5 +1,5 @@
 {
-  "name": "SNCF Departures",
+  "name": "SNCF HA",
   "homeassistant": "2024.12.0",
   "render_readme": true
 }

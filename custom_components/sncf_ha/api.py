@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Mapping
+from datetime import datetime
 from typing import Any
 
 import aiohttp
-from homeassistant.util import dt as dt_util
 
 from .const import (
     API_BASE_URL,
@@ -68,7 +68,13 @@ class SncfApiClient:
         ]
 
     async def async_get_trains(
-        self, origin_id: str, destination_id: str, count: int
+        self,
+        origin_id: str,
+        destination_id: str,
+        count: int,
+        *,
+        search_from: datetime,
+        until: datetime | None = None,
     ) -> list[Train]:
         """Return upcoming direct trains, cancelled ones included.
 
@@ -76,11 +82,10 @@ class SncfApiClient:
         drops cancelled trains, the base-schedule view still lists them with
         their disruption.
         """
-        now = dt_util.now(API_TIMEZONE)
         base_params = {
             "from": origin_id,
             "to": destination_id,
-            "datetime": now.strftime(API_DATETIME_FORMAT),
+            "datetime": search_from.astimezone(API_TIMEZONE).strftime(API_DATETIME_FORMAT),
             "datetime_represents": "departure",
             "count": count,
             "max_nb_transfers": 0,
@@ -93,6 +98,7 @@ class SncfApiClient:
             parse_journeys(realtime, origin_id=origin_id, destination_id=destination_id),
             parse_journeys(scheduled, origin_id=origin_id, destination_id=destination_id),
             count,
+            until,
         )
 
     async def _get(self, path: str, params: Mapping[str, Any] | None = None) -> dict[str, Any]:

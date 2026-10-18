@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "SNCF route",
-        "description": "Get a free API key at https://www.digital.sncf.com/startup/api, then type part of each station name.",
+        "description": "Get a free API key at https://numerique.sncf.com/startup/api/, then type part of each station name.",
         "data": {
           "api_key": "API key",
           "origin_query": "Departure station",
@@ -14,13 +14,17 @@
         "title": "Choose the stations",
         "data": {
           "origin_id": "Departure station",
-          "destination_id": "Arrival station"
+          "destination_id": "Arrival station",
+          "time_start": "Window start",
+          "time_end": "Window end"
         }
       },
       "reauth_confirm": {
         "title": "Reauthenticate",
         "description": "The SNCF API rejected your key. Enter a new one.",
-        "data": {"api_key": "API key"}
+        "data": {
+          "api_key": "API key"
+        }
       }
     },
     "error": {
@@ -28,7 +32,8 @@
       "cannot_connect": "Unable to reach the SNCF API",
       "rate_limited": "API quota exceeded, try again later",
       "no_station_found": "No station found",
-      "same_station": "Departure and arrival must be different"
+      "same_station": "Departure and arrival must be different",
+      "invalid_time_range": "The window start must be before its end (it cannot cross midnight)"
     },
     "abort": {
       "already_configured": "This route is already configured",
@@ -41,22 +46,36 @@
         "title": "Options",
         "data": {
           "scan_interval": "Refresh interval (seconds)",
-          "train_count": "Number of trains"
+          "train_count": "Number of trains",
+          "time_start": "Window start",
+          "time_end": "Window end"
         },
         "data_description": {
-          "scan_interval": "Each refresh uses 2 requests of your 5,000/day quota."
+          "scan_interval": "Each refresh uses 2 requests of your API quota.",
+          "time_end": "Outside the window, data is refreshed hourly and shows the next window's trains."
         }
       }
+    },
+    "error": {
+      "invalid_time_range": "The window start must be before its end (it cannot cross midnight)"
     }
   },
   "entity": {
     "sensor": {
-      "next_departure": {"name": "Next departure"},
-      "next_delay": {"name": "Next train delay"},
-      "cancelled_trains": {"name": "Cancelled trains"}
+      "next_departure": {
+        "name": "Next departure"
+      },
+      "next_delay": {
+        "name": "Next train delay"
+      },
+      "cancelled_trains": {
+        "name": "Cancelled trains"
+      }
     },
     "binary_sensor": {
-      "cancellation": {"name": "Cancellation"}
+      "cancellation": {
+        "name": "Cancellation"
+      }
     }
   }
 }

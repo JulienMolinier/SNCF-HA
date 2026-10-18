@@ -21,6 +21,7 @@ from homeassistant.helpers.selector import (
     TextSelector,
     TextSelectorConfig,
     TextSelectorType,
+    TimeSelector,
 )
 
 from .api import SncfApiClient, SncfApiError, SncfAuthError, SncfRateLimitError
@@ -31,8 +32,12 @@ from .const import (
     CONF_ORIGIN_ID,
     CONF_ORIGIN_NAME,
     CONF_ORIGIN_QUERY,
+    CONF_TIME_END,
+    CONF_TIME_START,
     CONF_TRAIN_COUNT,
     DEFAULT_SCAN_INTERVAL,
+    DEFAULT_TIME_END,
+    DEFAULT_TIME_START,
     DEFAULT_TRAIN_COUNT,
     DOMAIN,
     MAX_SCAN_INTERVAL,
@@ -41,6 +46,7 @@ from .const import (
     MIN_TRAIN_COUNT,
 )
 from .models import Station
+from .window import TimeWindow
 
 _API_KEY_SELECTOR = TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD))
 _REAUTH_SCHEMA = vol.Schema({vol.Required(CONF_API_KEY): _API_KEY_SELECTOR})
@@ -51,6 +57,14 @@ _USER_SCHEMA = vol.Schema(
         vol.Required(CONF_DESTINATION_QUERY): str,
     }
 )
+
+
+def _valid_window(start: str, end: str) -> bool:
+    try:
+        TimeWindow.from_strings(start, end)
+    except ValueError:
+        return False
+    return True
 
 
 def _error_key(err: SncfApiError) -> str:
@@ -116,6 +130,8 @@ class SncfConfigFlow(ConfigFlow, domain=DOMAIN):
             origin_id, destination_id = user_input[CONF_ORIGIN_ID], user_input[CONF_DESTINATION_ID]
             if origin_id == destination_id:
                 errors["base"] = "same_station"
+            elif not _valid_window(user_input[CONF_TIME_START], user_input[CONF_TIME_END]):
+                errors["base"] = "invalid_time_range"
             else:
                 await self.async_set_unique_id(f"{origin_id}>{destination_id}")
                 self._abort_if_unique_id_configured()
@@ -130,11 +146,17 @@ class SncfConfigFlow(ConfigFlow, domain=DOMAIN):
                         CONF_DESTINATION_ID: destination.id,
                         CONF_DESTINATION_NAME: destination.name,
                     },
+                    options={
+                        CONF_TIME_START: user_input[CONF_TIME_START],
+                        CONF_TIME_END: user_input[CONF_TIME_END],
+                    },
                 )
         schema = vol.Schema(
             {
                 vol.Required(CONF_ORIGIN_ID): _station_selector(self._origins),
                 vol.Required(CONF_DESTINATION_ID): _station_selector(self._destinations),
+                vol.Required(CONF_TIME_START, default=DEFAULT_TIME_START): TimeSelector(),
+                vol.Required(CONF_TIME_END, default=DEFAULT_TIME_END): TimeSelector(),
             }
         )
         return self.async_show_form(step_id="stations", data_schema=schema, errors=errors)
@@ -175,12 +197,22 @@ async def _async_validate_key(hass: HomeAssistant, api_key: str) -> str | None:
 
 
 class SncfOptionsFlow(OptionsFlow):
-    """Refresh interval and number of trains."""
+    """Refresh interval, number of trains and monitoring window."""
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Manage the options."""
+        errors: dict[str, str] = {}
         if user_input is not None:
-            return self.async_create_entry(data={k: int(v) for k, v in user_input.items()})
+            if _valid_window(user_input[CONF_TIME_START], user_input[CONF_TIME_END]):
+                return self.async_create_entry(
+                    data={
+                        CONF_SCAN_INTERVAL: int(user_input[CONF_SCAN_INTERVAL]),
+                        CONF_TRAIN_COUNT: int(user_input[CONF_TRAIN_COUNT]),
+                        CONF_TIME_START: user_input[CONF_TIME_START],
+                        CONF_TIME_END: user_input[CONF_TIME_END],
+                    }
+                )
+            errors["base"] = "invalid_time_range"
         options = self.config_entry.options
         schema = vol.Schema(
             {
@@ -207,6 +239,12 @@ class SncfOptionsFlow(OptionsFlow):
                         mode=NumberSelectorMode.BOX,
                     )
                 ),
+                vol.Required(
+                    CONF_TIME_START, default=options.get(CONF_TIME_START, DEFAULT_TIME_START)
+                ): TimeSelector(),
+                vol.Required(
+                    CONF_TIME_END, default=options.get(CONF_TIME_END, DEFAULT_TIME_END)
+                ): TimeSelector(),
             }
         )
-        return self.async_show_form(step_id="init", data_schema=schema)
+        return self.async_show_form(step_id="init", data_schema=schema, errors=errors)

@@ -1,4 +1,4 @@
-"""SNCF Departures: next trains between two stations, with cancellation handling."""
+"""SNCF HA: next trains between two stations, with cancellation handling."""
 
 from __future__ import annotations
 

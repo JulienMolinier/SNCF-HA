@@ -47,18 +47,27 @@ def parse_journeys(payload: dict[str, Any], *, origin_id: str, destination_id: s
     return list(trains.values())
 
 
-def merge_trains(realtime: list[Train], scheduled: list[Train], limit: int) -> list[Train]:
+def merge_trains(
+    realtime: list[Train],
+    scheduled: list[Train],
+    limit: int,
+    until: datetime | None = None,
+) -> list[Train]:
     """Merge the realtime and base-schedule views of the same route.
 
     The realtime view has the accurate times but may omit a cancelled train
     altogether; the base-schedule view still lists it, together with its
-    NO_SERVICE disruption. A cancellation always wins.
+    NO_SERVICE disruption. A cancellation always wins. Trains scheduled to
+    leave after `until` (end of the monitoring window) are dropped.
     """
     merged = {train.id: train for train in realtime}
     for train in scheduled:
         if train.is_cancelled:
             merged[train.id] = train
-    return sorted(merged.values(), key=lambda t: t.scheduled_departure)[:limit]
+    trains = sorted(merged.values(), key=lambda t: t.scheduled_departure)
+    if until is not None:
+        trains = [t for t in trains if t.scheduled_departure <= until]
+    return trains[:limit]
 
 
 def _first_public_transport_section(journey: dict[str, Any]) -> dict[str, Any] | None:

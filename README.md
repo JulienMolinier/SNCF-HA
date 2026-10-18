@@ -1,21 +1,32 @@
-# 🚄 SNCF Departures
+# 🚄 SNCF HA
 
 Intégration Home Assistant : prochains trains directs entre deux gares, avec **gestion des trains annulés**.
 
 ## Installation
 
 HACS → Dépôts personnalisés → URL de ce dépôt (catégorie *Intégration*) → installer → redémarrer.
-Manuel : copier `custom_components/sncf_departures` dans `config/custom_components/`.
+Manuel : copier `custom_components/sncf_ha` dans `config/custom_components/`.
 
 ## Configuration
 
-*Paramètres → Appareils et services → Ajouter → SNCF Departures*
+*Paramètres → Appareils et services → Ajouter → SNCF HA*
 
-1. Clé API gratuite : <https://www.digital.sncf.com/startup/api> (5 000 requêtes/jour).
+1. Clé API gratuite : <https://numerique.sncf.com/startup/api/> (quota gratuit limité, à vérifier sur le site).
 2. Saisir une partie du nom des gares de départ et d'arrivée, puis choisir dans la liste.
 
 Un trajet = une entrée de configuration. Ajoutez-en autant que nécessaire.
-Options : intervalle de mise à jour (défaut 5 min), nombre de trains (défaut 5).
+Options : créneau surveillé, intervalle de mise à jour (défaut 5 min), nombre de trains (défaut 5).
+
+## Créneau horaire
+
+Au lieu de suivre toute la journée, définissez un créneau (ex. `06:30 → 09:00`, heure de Paris),
+à la création du trajet ou plus tard via *Configurer*. Le créneau doit tenir dans une même journée
+(pas de passage à minuit) ; par défaut `00:00 → 23:59`.
+
+- **Pendant le créneau** : mise à jour à l'intervalle choisi, uniquement les trains partant avant la fin du créneau.
+- **Hors créneau** : une mise à jour par heure (et une au début du créneau) qui affiche les trains du
+  **prochain créneau**, y compris ceux déjà annulés. Coût hors créneau : environ 48 requêtes/jour.
+- « Nombre de trains » est un maximum : si le créneau contient plus de trains, les derniers sont tronqués.
 
 ## Entités (par trajet)
 
@@ -57,7 +68,7 @@ action:
 ## Limites
 
 - Trains directs uniquement (`max_nb_transfers=0`).
-- Quota : 2 requêtes par mise à jour et par trajet (5 min ≈ 576 requêtes/jour/trajet).
+- Quota : 2 requêtes par mise à jour et par trajet (5 min ≈ 576 requêtes/jour, soit ≈ 17 300/mois par trajet).
 
 ## Développement
 
