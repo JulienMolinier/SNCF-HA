@@ -73,13 +73,3 @@ class Train:
             "arrival_delay_minutes": self.arrival_delay_minutes,
             "message": self.message,
         }
-
-
-def next_train(trains: list[Train]) -> Train | None:
-    """Return the earliest train that actually runs."""
-    return min((t for t in trains if not t.is_cancelled), key=lambda t: t.departure, default=None)
-
-
-def cancelled_trains(trains: list[Train]) -> list[Train]:
-    """Return the cancelled trains."""
-    return [t for t in trains if t.is_cancelled]

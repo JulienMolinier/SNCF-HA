@@ -1,0 +1,38 @@
+# À adapter : event.antibes_nice_annulation, sensor.antibes_nice_trains, notify.mobile_app_telephone.
+
+# 1. Alerte quand un train vient d'être annulé (une seule fois par train).
+- alias: "SNCF – train annulé"
+  mode: queued
+  triggers:
+    - trigger: state
+      entity_id: event.antibes_nice_annulation
+      not_to:
+        - unavailable
+        - unknown
+  actions:
+    - action: notify.mobile_app_telephone
+      data:
+        title: "❌ Train annulé"
+        message: >-
+          {% set a = trigger.to_state.attributes %}
+          Train {{ a.number }} de {{ (as_datetime(a.scheduled_departure) | as_local).strftime('%H:%M') }}
+          vers {{ a.direction }}. {{ a.message or '' }}
+
+# 2. Retards : à chaque changement de la liste, renvoie les retards en cours.
+- alias: "SNCF – retards"
+  mode: restart
+  triggers:
+    - trigger: state
+      entity_id: sensor.antibes_nice_trains
+  conditions:
+    - condition: template
+      value_template: "{{ state_attr('sensor.antibes_nice_trains', 'delayed_count') | int(0) > 0 }}"
+  actions:
+    - action: notify.mobile_app_telephone
+      data:
+        title: "⚠️ Retards"
+        message: >-
+          {% for t in state_attr('sensor.antibes_nice_trains', 'trains') if t.status == 'delayed' %}
+          Train {{ t.number }} de {{ (as_datetime(t.scheduled_departure) | as_local).strftime('%H:%M') }} :
+          +{{ t.delay_minutes }} min (départ {{ (as_datetime(t.departure) | as_local).strftime('%H:%M') }})
+          {% endfor %}

@@ -1,0 +1,12 @@
+# Tableau d'affichage : une ligne par train sur le créneau surveillé.
+# À adapter : le titre et l'entité (Paramètres → Entités → chercher « trains »).
+type: markdown
+title: Antibes → Nice
+content: |
+  {% for t in state_attr('sensor.antibes_nice_trains', 'trains') or [] %}
+  {% set dep = as_datetime(t.scheduled_departure) | as_local %}
+  **{{ dep.strftime('%d/%m - %H:%M') }} - n°{{ t.number }} - {% if t.status == 'cancelled' %}❌ Annulé{% elif t.status == 'delayed' %}⚠️ Retard +{{ t.delay_minutes }} min (départ {{ (as_datetime(t.departure) | as_local).strftime('%H:%M') }}){% else %}✅ À l'heure{% endif %}**
+
+  {% else %}
+  Aucun train sur ce créneau.
+  {% endfor %}

@@ -1,44 +1,33 @@
-"""Tests for the monitoring window."""
+"""Tests for the search planning."""
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, time
 from zoneinfo import ZoneInfo
 
-import pytest
-
-from custom_components.sncf_ha.window import TimeWindow
+from custom_components.sncf_ha.window import plan_search
 
 PARIS = ZoneInfo("Europe/Paris")
-WINDOW = TimeWindow.from_strings("06:00", "09:00:00")
+START = time(7, 0)
 
 
-def at(day: int, hour: int, minute: int = 0) -> datetime:
-    return datetime(2026, 10, day, hour, minute, tzinfo=PARIS)
+def at(hour: int, minute: int = 0) -> datetime:
+    return datetime(2026, 10, 16, hour, minute, tzinfo=PARIS)
 
 
-def test_before_window_targets_today_start() -> None:
-    slot = WINDOW.current_or_next_slot(at(16, 4))
-    assert not slot.active
-    assert slot.start == at(16, 6)
-    assert slot.end == at(16, 9)
+def test_before_start_looks_from_start_and_is_not_live() -> None:
+    search = plan_search(at(4), START)
+    assert search.search_from == at(7)
+    assert not search.active
 
 
-def test_inside_window_is_active() -> None:
-    slot = WINDOW.current_or_next_slot(at(16, 7, 30))
-    assert slot.active
-    assert slot.end == at(16, 9)
+def test_at_start_is_live_from_now() -> None:
+    search = plan_search(at(7), START)
+    assert search.search_from == at(7)
+    assert search.active
 
 
-def test_after_window_targets_tomorrow() -> None:
-    slot = WINDOW.current_or_next_slot(at(16, 9, 1))
-    assert not slot.active
-    assert slot.start == at(17, 6)
-    assert slot.end == at(17, 9)
-
-
-def test_invalid_window_rejected() -> None:
-    with pytest.raises(ValueError):
-        TimeWindow.from_strings("09:00", "06:00")
-    with pytest.raises(ValueError):
-        TimeWindow.from_strings("nope", "06:00")
+def test_after_start_looks_from_now() -> None:
+    search = plan_search(at(18, 30), START)
+    assert search.search_from == at(18, 30)
+    assert search.active

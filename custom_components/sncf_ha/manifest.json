@@ -1,12 +1,12 @@
 {
   "domain": "sncf_ha",
   "name": "SNCF HA",
-  "codeowners": ["@JulienMolinier"],
+  "codeowners": ["@YOUR_GITHUB_USER"],
   "config_flow": true,
-  "documentation": "https://github.com/JulienMolinier/SNCF-HA",
+  "documentation": "https://github.com/YOUR_GITHUB_USER/sncf-ha",
   "integration_type": "service",
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/JulienMolinier/SNCF-HA/issues",
+  "issue_tracker": "https://github.com/YOUR_GITHUB_USER/sncf-ha/issues",
   "requirements": [],
   "version": "0.1.0"
 }

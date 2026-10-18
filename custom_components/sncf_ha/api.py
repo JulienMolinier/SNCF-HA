@@ -74,7 +74,6 @@ class SncfApiClient:
         count: int,
         *,
         search_from: datetime,
-        until: datetime | None = None,
     ) -> list[Train]:
         """Return upcoming direct trains, cancelled ones included.
 
@@ -98,7 +97,6 @@ class SncfApiClient:
             parse_journeys(realtime, origin_id=origin_id, destination_id=destination_id),
             parse_journeys(scheduled, origin_id=origin_id, destination_id=destination_id),
             count,
-            until,
         )
 
     async def _get(self, path: str, params: Mapping[str, Any] | None = None) -> dict[str, Any]:

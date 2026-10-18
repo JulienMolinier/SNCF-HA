@@ -15,8 +15,11 @@
         "data": {
           "origin_id": "Departure station",
           "destination_id": "Arrival station",
-          "time_start": "Window start",
-          "time_end": "Window end"
+          "time_start": "Start time",
+          "train_count": "Number of trains"
+        },
+        "data_description": {
+          "time_start": "Before this time, data is refreshed hourly and shows the trains from this time. From this time on, the next trains are refreshed at the chosen interval."
         }
       },
       "reauth_confirm": {
@@ -32,8 +35,7 @@
       "cannot_connect": "Unable to reach the SNCF API",
       "rate_limited": "API quota exceeded, try again later",
       "no_station_found": "No station found",
-      "same_station": "Departure and arrival must be different",
-      "invalid_time_range": "The window start must be before its end (it cannot cross midnight)"
+      "same_station": "Departure and arrival must be different"
     },
     "abort": {
       "already_configured": "This route is already configured",
@@ -46,35 +48,32 @@
         "title": "Options",
         "data": {
           "scan_interval": "Refresh interval (seconds)",
-          "train_count": "Number of trains",
-          "time_start": "Window start",
-          "time_end": "Window end"
+          "time_start": "Start time",
+          "train_count": "Number of trains"
         },
         "data_description": {
-          "scan_interval": "Each refresh uses 2 requests of your API quota.",
-          "time_end": "Outside the window, data is refreshed hourly and shows the next window's trains."
+          "time_start": "Before this time, data is refreshed hourly and shows the trains from this time. From this time on, the next trains are refreshed at the chosen interval.",
+          "scan_interval": "Each refresh uses 2 requests of your API quota."
         }
       }
-    },
-    "error": {
-      "invalid_time_range": "The window start must be before its end (it cannot cross midnight)"
     }
   },
   "entity": {
     "sensor": {
-      "next_departure": {
-        "name": "Next departure"
-      },
-      "next_delay": {
-        "name": "Next train delay"
-      },
-      "cancelled_trains": {
-        "name": "Cancelled trains"
+      "trains": {
+        "name": "Trains"
       }
     },
-    "binary_sensor": {
+    "event": {
       "cancellation": {
-        "name": "Cancellation"
+        "name": "Cancellation",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "cancelled": "Train cancelled"
+            }
+          }
+        }
       }
     }
   }

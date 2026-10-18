@@ -20,20 +20,18 @@ CONF_ORIGIN_ID: Final = "origin_id"
 CONF_ORIGIN_NAME: Final = "origin_name"
 CONF_DESTINATION_ID: Final = "destination_id"
 CONF_DESTINATION_NAME: Final = "destination_name"
-CONF_TRAIN_COUNT: Final = "train_count"
 CONF_TIME_START: Final = "time_start"
-CONF_TIME_END: Final = "time_end"
+CONF_TRAIN_COUNT: Final = "train_count"
 
 # Each refresh costs 2 API requests (realtime + base schedule).
 DEFAULT_SCAN_INTERVAL: Final = 300
 MIN_SCAN_INTERVAL: Final = 180
 MAX_SCAN_INTERVAL: Final = 3600
-DEFAULT_TRAIN_COUNT: Final = 5
 DEFAULT_TIME_START: Final = "00:00:00"
-DEFAULT_TIME_END: Final = "23:59:59"
-# Outside the window we only poll slowly (and wake up at the window start).
-IDLE_SCAN_INTERVAL: Final = 3600
+DEFAULT_TRAIN_COUNT: Final = 5
 MIN_TRAIN_COUNT: Final = 1
-MAX_TRAIN_COUNT: Final = 10
+MAX_TRAIN_COUNT: Final = 20
+# Before the start time we only poll slowly (and wake up at the start time).
+IDLE_SCAN_INTERVAL: Final = 3600
 
 EFFECT_NO_SERVICE: Final = "NO_SERVICE"

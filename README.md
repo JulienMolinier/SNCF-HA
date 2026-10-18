@@ -1,6 +1,7 @@
 # 🚄 SNCF HA
 
-Intégration Home Assistant : prochains trains directs entre deux gares, avec **gestion des trains annulés**.
+Intégration Home Assistant minimale : les prochains trains directs d'un trajet à partir d'une heure donnée,
+avec leur statut (à l'heure / retard / **annulé**) et le temps de retard.
 
 ## Installation
 
@@ -11,64 +12,55 @@ Manuel : copier `custom_components/sncf_ha` dans `config/custom_components/`.
 
 *Paramètres → Appareils et services → Ajouter → SNCF HA*
 
-1. Clé API gratuite : <https://numerique.sncf.com/startup/api/> (quota gratuit limité, à vérifier sur le site).
-2. Saisir une partie du nom des gares de départ et d'arrivée, puis choisir dans la liste.
+1. Clé API gratuite : <https://numerique.sncf.com/startup/api/>
+2. Saisir une partie du nom des gares de départ et d'arrivée, puis les choisir dans la liste.
+3. Choisir l'**heure de début** (ex. `07:00`, heure de Paris) et le **nombre de trains** à afficher (défaut 5).
 
-Un trajet = une entrée de configuration. Ajoutez-en autant que nécessaire.
-Options : créneau surveillé, intervalle de mise à jour (défaut 5 min), nombre de trains (défaut 5).
+Un trajet = une entrée. Réglages ultérieurs (*Configurer*) : **intervalle d'actualisation** (3 à 60 min, défaut 5),
+heure de début, nombre de trains.
 
-## Créneau horaire
+Fonctionnement :
 
-Au lieu de suivre toute la journée, définissez un créneau (ex. `06:30 → 09:00`, heure de Paris),
-à la création du trajet ou plus tard via *Configurer*. Le créneau doit tenir dans une même journée
-(pas de passage à minuit) ; par défaut `00:00 → 23:59`.
-
-- **Pendant le créneau** : mise à jour à l'intervalle choisi, uniquement les trains partant avant la fin du créneau.
-- **Hors créneau** : une mise à jour par heure (et une au début du créneau) qui affiche les trains du
-  **prochain créneau**, y compris ceux déjà annulés. Coût hors créneau : environ 48 requêtes/jour.
-- « Nombre de trains » est un maximum : si le créneau contient plus de trains, les derniers sont tronqués.
+- **Avant l'heure de début** : une mise à jour par heure, avec les trains à partir de l'heure de début.
+- **À partir de l'heure de début** : les *prochains* trains, actualisés à l'intervalle choisi (jusqu'à minuit ; la liste
+  passe aux trains du lendemain quand il n'y en a plus).
 
 ## Entités (par trajet)
 
-| Entité | Description |
+| Entité | Rôle |
 |---|---|
-| `sensor.…_prochain_depart` | Heure réelle du prochain train **qui circule** (timestamp). Attributs : détail du train + liste `trains`. |
-| `sensor.…_retard_du_prochain_train` | Retard en minutes. |
-| `sensor.…_trains_annules` | Nombre de trains annulés dans la fenêtre. Attribut `trains`. |
-| `binary_sensor.…_annulation` | `on` si au moins un train est annulé (classe `problem`). |
+| `sensor.…_trains` | État = nombre de trains. Attribut `trains` : pour chaque train `number`, `direction`, `mode`, `status` (`on_time` / `delayed` / `cancelled`), `scheduled_departure`, `departure`, `delay_minutes`, `arrival_delay_minutes`, `message`. Attributs `cancelled_count` et `delayed_count`. |
+| `event.…_annulation` | Un événement `cancelled` quand un train vient d'être annulé (une seule fois par train), avec le détail du train en attributs. |
 
-Chaque train de l'attribut `trains` contient : `number`, `direction`, `mode`, `status`
-(`on_time` / `delayed` / `cancelled`), horaires prévus et réels, retards, `message`.
+Pas d'alerte à la première mise à jour après un démarrage. Les retards n'ont pas d'événement : ils sont dans la
+liste, à vous de les renvoyer depuis une automatisation.
 
-## Trains annulés : fonctionnement
+## Carte « tableau d'affichage »
 
-L'API en temps réel ne renvoie généralement pas un train supprimé. Chaque mise à jour fait donc
-**2 requêtes** : vue temps réel (horaires fiables) + vue horaire théorique (qui liste encore le train
-avec sa perturbation). Un train est `cancelled` si :
+[`examples/lovelace_card.yaml`](examples/lovelace_card.yaml) : carte Markdown native (aucune ressource à installer).
 
-1. une perturbation `NO_SERVICE` active/à venir couvre son départ ;
-2. une perturbation supprime la gare de départ ou d'arrivée **de votre trajet** (le train roule, pas pour vous) ;
-3. le trajet est marqué `NO_SERVICE`.
-
-Les trains annulés sont exclus de « prochain départ », comptés dans « trains annulés » et déclenchent le binary sensor.
-
-Exemple d'automatisation :
-
-```yaml
-trigger:
-  - platform: state
-    entity_id: binary_sensor.paris_lyon_annulation
-    to: "on"
-action:
-  - action: notify.mobile_app_phone
-    data:
-      message: "{{ state_attr('binary_sensor.paris_lyon_annulation', 'trains')[0].message }}"
+```
+19/10 - 07:55 - n°8501 - ✅ À l'heure
+19/10 - 08:03 - n°8503 - ⚠️ Retard +5 min (départ 08:08)
+19/10 - 08:27 - n°8505 - ❌ Annulé
 ```
 
-## Limites
+## Automatisations
 
-- Trains directs uniquement (`max_nb_transfers=0`).
-- Quota : 2 requêtes par mise à jour et par trajet (5 min ≈ 576 requêtes/jour, soit ≈ 17 300/mois par trajet).
+[`examples/automations.yaml`](examples/automations.yaml) : notification à chaque train annulé, et notification
+des retards en cours à chaque changement de la liste.
+
+## Comment les annulations sont détectées
+
+L'API temps réel ne renvoie généralement pas un train supprimé. Chaque mise à jour fait donc **2 requêtes** :
+temps réel (horaires fiables) + horaire théorique (qui liste encore le train avec sa perturbation).
+Un train est `cancelled` si une perturbation `NO_SERVICE` active couvre son départ, si une perturbation supprime
+la gare de départ ou d'arrivée **de votre trajet**, ou si le trajet est marqué `NO_SERVICE`.
+
+## Quota
+
+Chaque mise à jour = 2 requêtes API. À 5 min : ≈ 576 requêtes/jour une fois l'heure de début passée.
+Augmentez l'intervalle pour économiser. Limites : trains directs uniquement, 20 trains maximum.
 
 ## Développement
 
@@ -77,8 +69,7 @@ pip install -r requirements_test.txt
 ruff check . && ruff format --check . && pytest
 ```
 
-Structure : `api.py` (client), `parser.py` + `models.py` (logique pure, testée), `coordinator.py`,
-`config_flow.py` (+ reauth + options), `sensor.py`, `binary_sensor.py`, `entity.py`.
+Logique pure et testée : `parser.py`, `models.py`, `changes.py`, `window.py`.
 
 ## Licence
 

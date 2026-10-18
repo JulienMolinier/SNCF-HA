@@ -4,12 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from custom_components.sncf_ha.models import TrainStatus, cancelled_trains, next_train
-from custom_components.sncf_ha.parser import (
-    merge_trains,
-    parse_datetime,
-    parse_journeys,
-)
+from custom_components.sncf_ha.models import TrainStatus
+from custom_components.sncf_ha.parser import merge_trains, parse_journeys
 
 ORIGIN = "stop_area:SNCF:87391003"
 DEST = "stop_area:SNCF:87686006"
@@ -192,8 +188,7 @@ def test_merge_adds_cancelled_train_missing_from_realtime() -> None:
         ("8501", TrainStatus.CANCELLED),
         ("8502", TrainStatus.ON_TIME),
     ]
-    assert next_train(merged).number == "8502"  # type: ignore[union-attr]
-    assert len(cancelled_trains(merged)) == 1
+    assert sum(t.is_cancelled for t in merged) == 1
 
 
 def test_merge_keeps_realtime_times_for_running_trains() -> None:
@@ -224,29 +219,3 @@ def test_merge_respects_limit() -> None:
     )
     assert len(merge_trains([], scheduled, limit=2)) == 0  # only cancelled ones are added
     assert len(merge_trains(scheduled, [], limit=2)) == 2
-
-
-def test_merge_until_drops_trains_after_window_end() -> None:
-    trains = parse(
-        {
-            "journeys": [
-                journey("1", "20261016T070000", "20261016T080000"),
-                journey("2", "20261016T090000", "20261016T100000"),
-                journey("3", "20261016T110000", "20261016T120000"),
-            ]
-        }
-    )
-    until = parse_datetime("20261016T090000")
-    assert [t.number for t in merge_trains(trains, [], limit=10, until=until)] == ["1", "2"]
-
-
-def test_cancelled_train_inside_window_is_kept() -> None:
-    scheduled = parse(
-        {
-            "journeys": [journey("1", "20261016T070000", "20261016T080000", links=("d1",))],
-            "disruptions": [disruption("d1", "NO_SERVICE")],
-        }
-    )
-    until = parse_datetime("20261016T090000")
-    (train,) = merge_trains([], scheduled, limit=10, until=until)
-    assert train.is_cancelled

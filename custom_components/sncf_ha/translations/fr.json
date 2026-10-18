@@ -15,8 +15,11 @@
         "data": {
           "origin_id": "Gare de départ",
           "destination_id": "Gare d'arrivée",
-          "time_start": "Début du créneau",
-          "time_end": "Fin du créneau"
+          "time_start": "Heure de début",
+          "train_count": "Nombre de trains"
+        },
+        "data_description": {
+          "time_start": "Avant cette heure, mise à jour toutes les heures avec les trains à partir de cette heure. Ensuite, les prochains trains sont actualisés à l'intervalle choisi."
         }
       },
       "reauth_confirm": {
@@ -32,8 +35,7 @@
       "cannot_connect": "Impossible de joindre l'API SNCF",
       "rate_limited": "Quota de l'API dépassé, réessayez plus tard",
       "no_station_found": "Aucune gare trouvée",
-      "same_station": "Le départ et l'arrivée doivent être différents",
-      "invalid_time_range": "Le début du créneau doit précéder sa fin (pas de passage à minuit)"
+      "same_station": "Le départ et l'arrivée doivent être différents"
     },
     "abort": {
       "already_configured": "Ce trajet est déjà configuré",
@@ -46,35 +48,32 @@
         "title": "Options",
         "data": {
           "scan_interval": "Intervalle de mise à jour (secondes)",
-          "train_count": "Nombre de trains",
-          "time_start": "Début du créneau",
-          "time_end": "Fin du créneau"
+          "time_start": "Heure de début",
+          "train_count": "Nombre de trains"
         },
         "data_description": {
-          "scan_interval": "Chaque mise à jour consomme 2 requêtes de votre quota API.",
-          "time_end": "Hors créneau, les données sont mises à jour toutes les heures et montrent les trains du prochain créneau."
+          "time_start": "Avant cette heure, mise à jour toutes les heures avec les trains à partir de cette heure. Ensuite, les prochains trains sont actualisés à l'intervalle choisi.",
+          "scan_interval": "Chaque mise à jour consomme 2 requêtes de votre quota API."
         }
       }
-    },
-    "error": {
-      "invalid_time_range": "Le début du créneau doit précéder sa fin (pas de passage à minuit)"
     }
   },
   "entity": {
     "sensor": {
-      "next_departure": {
-        "name": "Prochain départ"
-      },
-      "next_delay": {
-        "name": "Retard du prochain train"
-      },
-      "cancelled_trains": {
-        "name": "Trains annulés"
+      "trains": {
+        "name": "Trains"
       }
     },
-    "binary_sensor": {
+    "event": {
       "cancellation": {
-        "name": "Annulation"
+        "name": "Annulation",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "cancelled": "Train annulé"
+            }
+          }
+        }
       }
     }
   }

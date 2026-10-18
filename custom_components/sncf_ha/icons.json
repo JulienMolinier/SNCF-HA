@@ -1,12 +1,14 @@
 {
   "entity": {
     "sensor": {
-      "next_departure": {"default": "mdi:train"},
-      "next_delay": {"default": "mdi:clock-alert-outline"},
-      "cancelled_trains": {"default": "mdi:train-car"}
+      "trains": {
+        "default": "mdi:train"
+      }
     },
-    "binary_sensor": {
-      "cancellation": {"default": "mdi:cancel"}
+    "event": {
+      "cancellation": {
+        "default": "mdi:train-variant"
+      }
     }
   }
 }
