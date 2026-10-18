@@ -27,7 +27,7 @@ from .const import (
     IDLE_SCAN_INTERVAL,
 )
 from .models import Train
-from .window import plan_search
+from .window import last_departure, plan_search, trim_to_board
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -52,13 +52,17 @@ class SncfCoordinator(DataUpdateCoordinator[list[Train]]):
         )
         self._client = client
         self._start = time.fromisoformat(entry.options.get(CONF_TIME_START, DEFAULT_TIME_START))
+        # End of today's board (scheduled departure of its last train) and whether
+        # all its trains have left. In memory only: rebuilt after a restart.
+        self._cutoff: datetime | None = None
+        self._finished = False
         # Trains newly cancelled by the last successful refresh (empty otherwise).
         self.cancellations: list[Train] = []
 
     async def _async_update_data(self) -> list[Train]:
         self.cancellations = []
         now = dt_util.now(API_TIMEZONE)
-        search = plan_search(now, self._start)
+        search = plan_search(now, self._start, self._finished)
         self._schedule_next_interval(now, search.active, search.search_from)
         try:
             trains = await self._client.async_get_trains(
@@ -71,13 +75,19 @@ class SncfCoordinator(DataUpdateCoordinator[list[Train]]):
             raise ConfigEntryAuthFailed(str(err)) from err
         except SncfApiError as err:
             raise UpdateFailed(str(err)) from err
+        if search.active:
+            trains, self._cutoff, self._finished = trim_to_board(trains, self._cutoff, now)
+        else:
+            self._cutoff = last_departure(trains)
+            if search.search_from.date() == now.date():  # before today's start time
+                self._finished = False
         # No alerts on the very first refresh (e.g. after a restart).
         if self.data is not None:
             self.cancellations = detect_new_cancellations(self.data, trains)
         return trains
 
     def _schedule_next_interval(self, now: datetime, active: bool, search_from: datetime) -> None:
-        """Poll at the chosen interval once started; hourly before (waking up at the start)."""
+        """Poll at the chosen interval while live; hourly otherwise (waking up at the start)."""
         if active:
             self.update_interval = self._active_interval
             return

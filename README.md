@@ -19,11 +19,15 @@ Manuel : copier `custom_components/sncf_ha` dans `config/custom_components/`.
 Un trajet = une entrée. Réglages ultérieurs (*Configurer*) : **intervalle d'actualisation** (3 à 60 min, défaut 5),
 heure de début, nombre de trains.
 
-Fonctionnement :
+Fonctionnement : le tableau est composé des **N trains à partir de l'heure de début**.
 
-- **Avant l'heure de début** : une mise à jour par heure, avec les trains à partir de l'heure de début.
-- **À partir de l'heure de début** : les *prochains* trains, actualisés à l'intervalle choisi (jusqu'à minuit ; la liste
-  passe aux trains du lendemain quand il n'y en a plus).
+- **Avant l'heure de début** : une mise à jour par heure, avec les N trains à partir de l'heure de début.
+- **À partir de l'heure de début** : ces N trains sont actualisés à l'intervalle choisi (retards, annulations).
+- **Quand les N trains sont partis** : retour en veille (une mise à jour par heure) ; le tableau affiche les trains
+  du lendemain à partir de l'heure de début.
+
+Après un redémarrage de Home Assistant (ou un changement d'options) en cours de journée, le tableau est reconstruit
+à partir de l'heure courante : il montre alors les N prochains trains.
 
 ## Entités (par trajet)
 
@@ -59,8 +63,8 @@ la gare de départ ou d'arrivée **de votre trajet**, ou si le trajet est marqu�
 
 ## Quota
 
-Chaque mise à jour = 2 requêtes API. À 5 min : ≈ 576 requêtes/jour une fois l'heure de début passée.
-Augmentez l'intervalle pour économiser. Limites : trains directs uniquement, 20 trains maximum.
+Chaque mise à jour = 2 requêtes API. Le rythme rapide ne dure que de l'heure de début jusqu'au départ du dernier train
+(ex. 1 h à 5 min = 12 mises à jour) ; le reste du temps : 1 mise à jour par heure, soit ≈ 48 requêtes/jour. Limites : trains directs uniquement, 20 trains maximum.
 
 ## Développement
 
