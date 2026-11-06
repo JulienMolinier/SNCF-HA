@@ -1,12 +1,13 @@
-# Tableau d'affichage : une ligne par train sur le créneau surveillé.
+# Tableau d'affichage : une ligne par train.
 # À adapter : le titre et l'entité (Paramètres → Entités → chercher « trains »).
+# Les heures sont lues telles quelles (heure de Paris, fournie par l'API) : elles ne dépendent
+# pas du fuseau horaire configuré dans Home Assistant.
 type: markdown
 title: Antibes → Nice
 content: |
   {% for t in state_attr('sensor.antibes_nice_trains', 'trains') or [] %}
-  {% set dep = as_datetime(t.scheduled_departure) | as_local %}
-  **{{ dep.strftime('%d/%m - %H:%M') }} - n°{{ t.number }} - {% if t.status == 'cancelled' %}❌ Annulé{% elif t.status == 'delayed' %}⚠️ Retard +{{ t.delay_minutes }} min (départ {{ (as_datetime(t.departure) | as_local).strftime('%H:%M') }}){% else %}✅ À l'heure{% endif %}**
+  **{{ t.scheduled_departure[8:10] }}/{{ t.scheduled_departure[5:7] }} - {{ t.scheduled_departure[11:16] }} - n°{{ t.number }} - {% if t.status == 'cancelled' %}❌ Annulé{% elif t.status == 'delayed' %}⚠️ Retard +{{ t.delay_minutes }} min (départ {{ t.departure[11:16] }}){% else %}✅ À l'heure{% endif %}**
 
   {% else %}
-  Aucun train sur ce créneau.
+  Aucun train.
   {% endfor %}

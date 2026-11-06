@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Any
 
 from custom_components.sncf_ha.models import TrainStatus
@@ -61,7 +63,12 @@ def disruption(
         "impacted_objects": [
             {
                 "impacted_stops": [
-                    {"stop_point": {"stop_area": {"id": sa}}, "stop_time_effect": eff}
+                    {
+                        "stop_point": {"id": sa.replace("stop_area", "stop_point") + ":Train"},
+                        "departure_status": eff,
+                        "arrival_status": eff,
+                        "stop_time_effect": eff,
+                    }
                     for sa, eff in stops
                 ]
             }
@@ -219,3 +226,61 @@ def test_merge_respects_limit() -> None:
     )
     assert len(merge_trains([], scheduled, limit=2)) == 0  # only cancelled ones are added
     assert len(merge_trains(scheduled, [], limit=2)) == 2
+
+
+# --- Real data -------------------------------------------------------------
+# tests/fixtures/disruption_reduced_service.json is a real disruption captured on
+# 2026-10-27 (train 881203, Menton direction, 08:03 from Antibes): effect
+# REDUCED_SERVICE, deleted stops listed as stop_point ids (no stop_area), and the
+# train ends its trip at Cannes. Its status was "active" while it ran.
+
+ANTIBES = "stop_area:SNCF:87757674"
+NICE_ST_AUGUSTIN = "stop_area:SNCF:87756254"
+
+
+def _real_disruption() -> dict[str, Any]:
+    path = Path(__file__).parent / "fixtures" / "disruption_reduced_service.json"
+    return json.loads(path.read_text())
+
+
+def _stop_area(name: str) -> str:
+    disruption = _real_disruption()
+    for stop in disruption["impacted_objects"][0]["impacted_stops"]:
+        if stop["stop_point"]["name"] == name:
+            return (
+                stop["stop_point"]["id"].replace("stop_point", "stop_area").removesuffix(":Train")
+            )
+    raise AssertionError(name)
+
+
+def _real_payload(disruption: dict[str, Any]) -> dict[str, Any]:
+    j = journey("881203", "20261027T080300", "20261027T082300", links=(disruption["id"],))
+    return {"journeys": [j], "disruptions": [disruption]}
+
+
+def _parse_real(origin: str, destination: str, disruption: dict[str, Any] | None = None):
+    payload = _real_payload(disruption or _real_disruption())
+    return parse_journeys(payload, origin_id=origin, destination_id=destination)
+
+
+def test_real_partial_cancellation_antibes_to_nice() -> None:
+    (train,) = _parse_real(ANTIBES, NICE_ST_AUGUSTIN)
+    assert train.status is TrainStatus.CANCELLED
+    assert train.message == "Défaillance de matériel"
+
+
+def test_real_train_ending_at_cannes_is_fine_for_a_trip_ending_at_cannes() -> None:
+    # Cannes La Bocca -> Cannes: the train still runs there (its departure from
+    # Cannes is deleted, but nobody boards there).
+    (train,) = _parse_real(_stop_area("Cannes La Bocca"), _stop_area("Cannes"))
+    assert not train.is_cancelled
+
+
+def test_real_train_cannot_be_boarded_at_cannes() -> None:
+    (train,) = _parse_real(_stop_area("Cannes"), NICE_ST_AUGUSTIN)
+    assert train.is_cancelled
+
+
+def test_real_disruption_once_past_is_ignored() -> None:
+    (train,) = _parse_real(ANTIBES, NICE_ST_AUGUSTIN, {**_real_disruption(), "status": "past"})
+    assert not train.is_cancelled

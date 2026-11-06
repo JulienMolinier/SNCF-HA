@@ -1,0 +1,123 @@
+{
+  "id": "23df2695-3960-40b5-a875-e1c5772d21e8",
+  "disruption_id": "23df2695-3960-40b5-a875-e1c5772d21e8",
+  "impact_id": "23df2695-3960-40b5-a875-e1c5772d21e8",
+  "application_periods": [
+    {
+      "begin": "20261027T065600",
+      "end": "20261027T100200"
+    }
+  ],
+  "status": "active",
+  "updated_at": "20261027T072158",
+  "cause": "",
+  "severity": {
+    "name": "reduced service",
+    "effect": "REDUCED_SERVICE",
+    "color": "#000000",
+    "priority": 42
+  },
+  "messages": [
+    {
+      "text": "Défaillance de matériel",
+      "channel": {
+        "content_type": "",
+        "id": "rt",
+        "name": "rt",
+        "types": [
+          "web",
+          "mobile"
+        ]
+      }
+    }
+  ],
+  "impacted_objects": [
+    {
+      "pt_object": {
+        "id": "SNCF:2026-10-27:881203:5111:Train",
+        "name": "SNCF:2026-10-27:881203:5111:Train",
+        "quality": 0,
+        "trip": {
+          "id": "SNCF:2026-10-27:881203:5111:Train",
+          "name": "881203"
+        },
+        "embedded_type": "trip"
+      },
+      "impacted_stops": [
+        {
+          "stop_point": {
+            "id": "stop_point:SNCF:87757617:Train",
+            "name": "Cannes La Bocca"
+          },
+          "base_arrival_time": "074600",
+          "base_departure_time": "074700",
+          "amended_arrival_time": "082100",
+          "amended_departure_time": "082200",
+          "cause": "Défaillance de matériel",
+          "stop_time_effect": "delayed",
+          "departure_status": "delayed",
+          "arrival_status": "delayed",
+          "is_detour": false
+        },
+        {
+          "stop_point": {
+            "id": "stop_point:SNCF:87757625:Train",
+            "name": "Cannes"
+          },
+          "base_arrival_time": "075000",
+          "base_departure_time": "075200",
+          "amended_arrival_time": "082500",
+          "cause": "Défaillance de matériel",
+          "stop_time_effect": "delayed",
+          "departure_status": "deleted",
+          "arrival_status": "delayed",
+          "is_detour": false
+        },
+        {
+          "stop_point": {
+            "id": "stop_point:SNCF:87757674:Train",
+            "name": "Antibes"
+          },
+          "base_arrival_time": "080200",
+          "base_departure_time": "080300",
+          "cause": "Défaillance de matériel",
+          "stop_time_effect": "deleted",
+          "departure_status": "deleted",
+          "arrival_status": "deleted",
+          "is_detour": false
+        },
+        {
+          "stop_point": {
+            "id": "stop_point:SNCF:87756254:Train",
+            "name": "Nice Saint-Augustin"
+          },
+          "base_arrival_time": "082100",
+          "base_departure_time": "082300",
+          "cause": "Défaillance de matériel",
+          "stop_time_effect": "deleted",
+          "departure_status": "deleted",
+          "arrival_status": "deleted",
+          "is_detour": false
+        },
+        {
+          "stop_point": {
+            "id": "stop_point:SNCF:87756486:Train",
+            "name": "Menton"
+          },
+          "base_arrival_time": "092700",
+          "base_departure_time": "092700",
+          "amended_departure_time": "100200",
+          "cause": "Défaillance de matériel",
+          "stop_time_effect": "deleted",
+          "departure_status": "unchanged",
+          "arrival_status": "deleted",
+          "is_detour": false
+        }
+      ]
+    }
+  ],
+  "uri": "23df2695-3960-40b5-a875-e1c5772d21e8",
+  "disruption_uri": "23df2695-3960-40b5-a875-e1c5772d21e8",
+  "contributor": "realtime.sncf.piv",
+  "reference": ""
+}

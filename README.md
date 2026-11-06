@@ -54,12 +54,25 @@ liste, à vous de les renvoyer depuis une automatisation.
 [`examples/automations.yaml`](examples/automations.yaml) : notification à chaque train annulé, et notification
 des retards en cours à chaque changement de la liste.
 
+## Heures
+
+L'API SNCF renvoie des heures de Paris, que l'intégration conserve telles quelles (attributs ISO avec décalage, ex.
+`2026-10-27T08:03:00+01:00`). La carte d'exemple lit l'heure directement dans ce texte : elle s'affiche correctement
+quel que soit le fuseau horaire configuré dans Home Assistant.
+
 ## Comment les annulations sont détectées
 
 L'API temps réel ne renvoie généralement pas un train supprimé. Chaque mise à jour fait donc **2 requêtes** :
 temps réel (horaires fiables) + horaire théorique (qui liste encore le train avec sa perturbation).
-Un train est `cancelled` si une perturbation `NO_SERVICE` active couvre son départ, si une perturbation supprime
-la gare de départ ou d'arrivée **de votre trajet**, ou si le trajet est marqué `NO_SERVICE`.
+Un train est `cancelled` si :
+
+- une perturbation `NO_SERVICE` active couvre son départ ;
+- ou une perturbation (souvent `REDUCED_SERVICE`) supprime **le départ de votre gare de départ** ou **l'arrivée à votre
+  gare d'arrivée** : le train circule, mais pas pour votre trajet (ex. un train qui s'arrête à Cannes alors que vous
+  allez à Menton) ;
+- ou le trajet est marqué `NO_SERVICE`.
+
+Une perturbation n'est prise en compte que tant qu'elle est `active` ou `future` : une fois terminée (`past`), elle est ignorée.
 
 ## Quota
 
